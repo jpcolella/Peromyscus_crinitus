@@ -25,10 +25,11 @@ tail -n +2 angsd_pecr_Win.thetas.logSites.idx > angsd_pecr_Win.thetas.logSites_n
 ### Extract the 2nd field (e.g., the 1st col) and write to new file
 cut -f2 angsd_pecr_Win.thetas.logSites_nohead | awk '{$1 = $1 + 1; print}' | paste angsd_pecr_Win.thetas.logSites_nohead - | awk 'BEGIN {FS="\t"};{ print $1"\t"$2"\t"$8"\t"$4}' | sed 's/ //g' > pi_pecr_global.bed
 
-### Now LOOP through each chromosome, each listed on a separate line in chromosomes.txt
+
+### NOW, loop through all chromosomes (names listed 1 per line in chromosomes.txt)
 for CHR in `cat chromosomes.txt`; do
 
-    ### Make bed file for all variant and invariant sites for each chromosome
+    ###make bed file for all variant and invariant sites for each chromosome
     grep "$CHR" angsd_pecr_allvar.mafs > pecr_allvar_${CHR}.mafs
     
     ### Extract fields 1 and 2 and put them into a new file
@@ -38,33 +39,31 @@ for CHR in `cat chromosomes.txt`; do
     cut -f2 pecr_allvar.sites_${CHR}.txt | awk '{$1 = $1 + 1; print}' | paste pecr_allvar.sites_${CHR}.txt - | sed 's/ //g'> pecr_allvar.sites_${CHR}.bed
         # first_col +1 (and add this as a third column)
 
-    ### Split the genome window file in chr
+    ### Split the genome window file into chromosomes
     grep "$CHR" genome_windows_${WIN}k.bed > genome_windows_${WIN}k_${CHR}.bed
 
     ### Calculate the number of sites in each window for each chromosome
     bedtools coverage -a genome_windows_${WIN}k_${CHR}.bed -b pecr_allvar.sites_${CHR}.bed -counts > allsites_${WIN}kbwin_${CHR}.txt
         # Adds a column of coverage/depth
 
-    ### Extract the 4th field and replace 0's with NA's
+    ### Extract the 4th field and replace 0's with NA's 
     cut -f4 allsites_${WIN}kbwin_${CHR}.txt | sed 's/^0/NA/g' > allsites_${WIN}kwin_NA_${CHR}.txt
 
     ### Split the per site theta file
     grep "$CHR" pi_pecr_global.bed > pi_pecr_global_${CHR}.bed
     
-    ### e to the X
-    ### Where X = the values in col4 (e.g., Watterson's theta estimates per site)
+    ### e to the X with X being the values in col4 (e.g., Watterson's theta estimates per site)
     awk '{print exp($4)}' pi_pecr_global_${CHR}.bed | paste pi_pecr_global_${CHR}.bed - > pi_pecr_global_log_${CHR}.bed
     bedtools map -a genome_windows_${WIN}k_${CHR}.bed -b pi_pecr_global_log_${CHR}.bed -c 5 -o sum | sed 's/\t[.]/\tNA/g' - > pi_pecr_global_log_${WIN}kbwin_${CHR}.txt
         # Values from B (col 5 -> exp(Watterson)) mapped onto intervales in A and removing NAs
-        # 5th column is now the number of variable sites per window
-    paste pi_pecr_global_log_${WIN}kbwin_${CHR}.txt allsites_${WIN}kwin_NA_${CHR}.txt | sed 's/[.]\t/NA\t/g' - > pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt
-    
-    ### If it's an NA do nothing, otherwise divide col_4/col_5 (that is, the sum of exp(Wattersons) divided by the total number of variant sites within each window)
-    awk '{if(/NA/)var="NA";else var=$4/$5;print var}' pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt | paste pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt - > pi_pecr_global_log_${WIN}kbwin_sites_corrected_${CHR}.txt
-    ### Result: an average value of Watterson's (measure of nucleotide diversity equivalent to pi) for a given window:
-    
-done
+        # 5th column is a the number of variable sites
 
+    ### If it's an NA do nothing, otherwise divide col_4/col_5 (that is the sum of exp(Wattersons) divided by the total number of variant sites within the interval)
+    ### to get an average value of Watterson's (measure of nucleotide diversity equivalent to pi) for a given window
+    paste pi_pecr_global_log_${WIN}kbwin_${CHR}.txt allsites_${WIN}kwin_NA_${CHR}.txt | sed 's/[.]\t/NA\t/g' - > pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt
+    awk '{if(/NA/)var="NA";else var=$4/$5;print var}' pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt | paste pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt - > pi_pecr_global_log_${WIN}kbwin_sites_corrected_${CHR}.txt
+
+done
 
 #OUTPUT LOOKS LIKE THIS (without header)
 #chr    start   stop    SUM(exp(WatTheta))   #varSites_perWin   (SUM/#varSites)
