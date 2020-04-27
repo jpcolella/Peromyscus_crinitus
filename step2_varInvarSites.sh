@@ -6,7 +6,7 @@
 
 ### For Peromyscus crinitus, do:
 angsd -b pecr_bamfiles.txt -anc pecr10X_c2_HiC_chrAll_sortRC.fasta -out angsd_pecr_allvar \
-        -P 24 -minMapQ 20 -minQ 20 -setMinDepth 20 -minInd 5 -minMaf 0.01 -GL 1 -doMaf 1 -doMajorMinor 1 -doGlf 2 -doPost 1 -doGeno 32 -doCounts 1 -doDepth 1 -dumpCounts 1 -dosaf 1
+        -P 24 -minMapQ 20 -minQ 20 -setMinDepth 20 -minInd 5 -GL 1 -doMaf 1 -doMajorMinor 1 -doGlf 2 -doPost 1 -doCounts 1 -doDepth 1 -dumpCounts 1 -dosaf 1
   ### Repeat for each species of interest
 
 ### OUTPUTS angsd_*spp*_allvar
