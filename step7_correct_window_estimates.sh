@@ -30,7 +30,7 @@ cut -f2 angsd_pecr_Win.thetas.logSites_nohead | awk '{$1 = $1 + 1; print}' | pas
 for CHR in `cat chromosomes.txt`; do
 
     ###make bed file for all variant and invariant sites for each chromosome
-    grep "$CHR" angsd_pecr_allvar.mafs > pecr_allvar_${CHR}.mafs
+    grep "${CHR}$(printf '\t')" angsd_pecr_allvar.mafs > pecr_allvar_${CHR}.mafs
     
     ### Extract fields 1 and 2 and put them into a new file
     cut -f 1,2 pecr_allvar_${CHR}.mafs > pecr_allvar.sites_${CHR}.txt
@@ -40,7 +40,7 @@ for CHR in `cat chromosomes.txt`; do
         # first_col +1 (and add this as a third column)
 
     ### Split the genome window file into chromosomes
-    grep "$CHR" genome_windows_${WIN}k.bed > genome_windows_${WIN}k_${CHR}.bed
+    grep "${CHR}$(printf '\t')" genome_windows_${WIN}k.bed > genome_windows_${WIN}k_${CHR}.bed
 
     ### Calculate the number of sites in each window for each chromosome
     bedtools coverage -a genome_windows_${WIN}k_${CHR}.bed -b pecr_allvar.sites_${CHR}.bed -counts > pecr_allsites_${WIN}kbwin_${CHR}.txt
@@ -50,10 +50,11 @@ for CHR in `cat chromosomes.txt`; do
     cut -f4 pecr_allsites_${WIN}kbwin_${CHR}.txt | sed 's/^0/NA/g' > pecr_allsites_${WIN}kwin_NA_${CHR}.txt
 
     ### Split the per site theta file
-    grep "$CHR" pi_pecr_global.bed > pi_pecr_global_${CHR}.bed
+    grep "${CHR}$(printf '\t')" pi_pecr_global.bed > pi_pecr_global_${CHR}.bed
     
     ### e to the X with X being the values in col4 (e.g., Watterson's theta estimates per site)
-    awk '{print exp($4)}' pi_pecr_global_${CHR}.bed | paste pi_pecr_global_${CHR}.bed - > pi_pecr_global_log_${CHR}.bed   
+    awk '{print exp($4)}' pi_pecr_global_${CHR}.bed | paste pi_pecr_global_${CHR}.bed - > pi_pecr_global_log_${CHR}.bed
+    
     bedtools map -a genome_windows_${WIN}k_${CHR}.bed -b pi_pecr_global_log_${CHR}.bed -c 5 -o sum | sed 's/\t[.]/\tNA/g' - > pi_pecr_global_log_${WIN}kbwin_${CHR}.txt
         # Values from B (col 5 -> exp(Watterson)) mapped onto intervales in A and removing NAs
         # 5th column is a the number of variable sites
@@ -61,7 +62,7 @@ for CHR in `cat chromosomes.txt`; do
     ### If it's an NA do nothing, otherwise divide col_4/col_5 (that is the sum of exp(Wattersons) divided by the total number of variant sites within the interval)
     ### to get an average value of Watterson's (measure of nucleotide diversity equivalent to pi) for a given window
     paste pi_pecr_global_log_${WIN}kbwin_${CHR}.txt pecr_allsites_${WIN}kwin_NA_${CHR}.txt | sed 's/[.]\t/NA\t/g' - > pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt
-    awk '{if(/NA/)var="NA";else var=$5/$4;print var}' pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt | paste pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt - > pi_pecr_global_log_${WIN}kbwin_sites_corrected_${CHR}.txt
+    awk '{if(/NA/)var="NA";else var=$4/$5;print var}' pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt | paste pi_pecr_global_log_${WIN}kbwin_sites_${CHR}.txt - > pi_pecr_global_log_${WIN}kbwin_sites_corrected_${CHR}.txt
 
 done
 
