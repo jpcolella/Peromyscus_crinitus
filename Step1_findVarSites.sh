@@ -15,3 +15,8 @@ angsd -b pecr_bamfiles.txt -anc pecr10X_c2_HiC_chrAll_sortRC.fasta -out angsd_pe
 
 #OUTPUTS angsd_*spp*_var
   #Contains VARIABLES sites only
+  
+### CREATE LIST OF VARIABLE SITES
+gunzip angsd_pecr_var.mafs.gz
+cut -f 1,2,3,4 angsd_pecr_var.mafs | tail -n +2 > pecr_var_snplist.txt
+angsd sites index pecr_var_snplist.txt
