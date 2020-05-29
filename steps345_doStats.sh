@@ -8,10 +8,12 @@
 angsd/misc/realSFS angsd_pecr_var.saf.idx -P 24 > angsd_pecr_var.sfs
 
 ### STEP 4: Calculate thetas/pi and do a sliding window
-angsd -b pecr_bamfiles.txt -anc pecr10X_c2_HiC_chrAll_sortRC.fasta  -out angsd_pecr_Win -doThetas 1 -doSaf 1 -pest angsd_pecr_var.sfs -GL 1
+angsd -b pecr_bamfiles.txt -anc pecr10X_c2_HiC_chrAll_sortRC.fasta  -out angsd_pecr_Win -doThetas 1 -doSaf 1 -pest angsd_pecr_var.sfs -GL 1 -fold 1 -sites pecr_snplist.txt
+  #*_snplist file generated in step 1
 
 ### STEP 5: Estimate stats (Tajima's D and others) for every Chromosome/scaffold
-angsd/misc/thetaStat do_stat angsd_pecr_Win.thetas.idx
+angsd/misc/thetaStat do_stat angsd_pecr_Win.thetas.idx -type 2
+  #type 2 = folded
 angsd/misc/thetaStat print angsd_pecr_Win.thetas.idx > angsd_pecr_Win.thetas.logSites.idx
   ### Last step makes the output readable
 
